@@ -3,6 +3,7 @@ using System.ComponentModel.Design;
 using System.Globalization;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace EyesJump
 {
@@ -26,12 +27,14 @@ namespace EyesJump
     /// </summary>
     private readonly Package _package;
 
+    private IVsTextView _vsTextView;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="EyesJumpCommand"/> class.
     /// Adds our command handlers for menu (commands must exist in the command table file)
     /// </summary>
     /// <param name="package">Owner package, not null.</param>
-    private EyesJumpCommand(Package package)
+    private EyesJumpCommand(Package package, IViewProvider)
     {
       _package = package ?? throw new ArgumentNullException(nameof(package));
 
@@ -75,17 +78,22 @@ namespace EyesJump
     /// <param name="e">Event args.</param>
     private void MenuItemCallback(object sender, EventArgs e)
     {
+      new InputFilter(_vsTextView);
+      #region oldcode
+
       var message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", GetType().FullName);
       var title = "EyesJumpCommand";
 
       // Show a message box to prove we were here
       VsShellUtilities.ShowMessageBox(
-          ServiceProvider,
-          message,
-          title,
-          OLEMSGICON.OLEMSGICON_INFO,
-          OLEMSGBUTTON.OLEMSGBUTTON_OK,
-          OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        ServiceProvider,
+        message,
+        title,
+        OLEMSGICON.OLEMSGICON_INFO,
+        OLEMSGBUTTON.OLEMSGBUTTON_OK,
+        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+
+      #endregion
     }
   }
 }
