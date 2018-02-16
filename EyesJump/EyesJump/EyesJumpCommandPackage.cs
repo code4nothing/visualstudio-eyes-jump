@@ -1,14 +1,6 @@
-﻿using System;
-using System.ComponentModel.Design;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.Win32;
 
 namespace EyesJump
 {
@@ -32,7 +24,7 @@ namespace EyesJump
   [PackageRegistration(UseManagedResourcesOnly = true)]
   [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
   [ProvideMenuResource("Menus.ctmenu", 1)]
-  [Guid(EyesJumpCommandPackage.PackageGuidString)]
+  [Guid(PackageGuidString)]
   [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
   public sealed class EyesJumpCommandPackage : Package
   {
@@ -40,17 +32,6 @@ namespace EyesJump
     /// EyesJumpCommandPackage GUID string.
     /// </summary>
     public const string PackageGuidString = "4638de2e-900a-4594-a4bc-2c14b73654a1";
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="EyesJumpCommand"/> class.
-    /// </summary>
-    public EyesJumpCommandPackage()
-    {
-      // Inside this method you can place any initialization code that does not require
-      // any Visual Studio service because at this point the package object is created but
-      // not sited yet inside Visual Studio environment. The place to do all the other
-      // initialization is the Initialize method.
-    }
 
     #region Package Members
 
