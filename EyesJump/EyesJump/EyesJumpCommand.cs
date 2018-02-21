@@ -1,8 +1,10 @@
 ﻿using System;
 using System.ComponentModel.Design;
 using System.Globalization;
+using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace EyesJump
@@ -27,22 +29,52 @@ namespace EyesJump
     /// </summary>
     private readonly Package _package;
 
-    private IVsTextView _vsTextView;
+    private EyesJumpLogic _eyesJumpLogic;
+
+    public IWpfTextView TextView => RetrieveTextView();
+
+    private IWpfTextView RetrieveTextView()
+    {
+      var actievView = GetActiveView();
+
+      IWpfTextView view = null;
+
+      if (null != actievView)
+      {
+        IWpfTextViewHost viewHost;
+        var guidViewHost = DefGuidList.guidIWpfTextViewHost;
+        object holder = null;
+        (actievView as IVsUserData)?.GetData(ref guidViewHost, out holder);
+        viewHost = (IWpfTextViewHost)holder;
+        view = viewHost.TextView;
+      }
+      return view;
+    }
+
+    private static IVsTextView GetActiveView()
+    {
+      var vsTextManager = (IVsTextManager) Package.GetGlobalService(typeof(SVsTextManager));
+      vsTextManager.GetActiveView(1, null, out var actievView);
+      return actievView;
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EyesJumpCommand"/> class.
     /// Adds our command handlers for menu (commands must exist in the command table file)
     /// </summary>
     /// <param name="package">Owner package, not null.</param>
-    private EyesJumpCommand(Package package, IViewProvider)
+    private EyesJumpCommand(Package package)
     {
       _package = package ?? throw new ArgumentNullException(nameof(package));
+      
 
       if (ServiceProvider.GetService(typeof(IMenuCommandService)) is OleMenuCommandService commandService)
       {
         var menuCommandId = new CommandID(CommandSet, CommandId);
         var menuItem = new MenuCommand(MenuItemCallback, menuCommandId);
         commandService.AddCommand(menuItem);
+
+        _eyesJumpLogic = new EyesJumpLogic(ServiceProvider);
       }
     }
 
@@ -78,22 +110,15 @@ namespace EyesJump
     /// <param name="e">Event args.</param>
     private void MenuItemCallback(object sender, EventArgs e)
     {
-      new InputFilter(_vsTextView);
-      #region oldcode
-
-      var message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", GetType().FullName);
-      var title = "EyesJumpCommand";
-
-      // Show a message box to prove we were here
-      VsShellUtilities.ShowMessageBox(
-        ServiceProvider,
-        message,
-        title,
-        OLEMSGICON.OLEMSGICON_INFO,
-        OLEMSGBUTTON.OLEMSGBUTTON_OK,
-        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-
-      #endregion
+      var inputFilter = new InputFilter(GetActiveView());
+      inputFilter.Input += InputFilter_Input;
     }
+
+    private void InputFilter_Input(object sender, InputHandlerArgs args)
+    {
+      _eyesJumpLogic.ManageInput(args);
+    }
+
+
   }
 }
