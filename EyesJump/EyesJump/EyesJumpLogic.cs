@@ -10,32 +10,58 @@ namespace EyesJump
     public EyesJumpLogic(IServiceProvider serviceProvider)
     {
       _serviceProvider = serviceProvider;
-      _logic = new Logic();
+      _logic = new InitLogic(this);
     }
 
     private readonly IServiceProvider _serviceProvider;
-    private Logic _logic;
+    private ILogic _logic;
 
-    public event EventHandler SuspendInput;
+    public event EventHandler StopHandler;
+
+    public delegate void MessageHandler(string title, string message);
+    public event MessageHandler Message;
+
+    public event EventHandler StartHandler;
 
     public void ManageInput(InputHandlerArgs args)
     {
       _logic = _logic.RunLogic();
     }
-  }
 
-  internal class Logic
-  {
-    public Logic RunLogic()
+    protected virtual void OnStopHandler()
     {
-      ShowMessage("Eyes Jump", "Plugin is running");
-      return this;
+      StopHandler?.Invoke(this, EventArgs.Empty);
     }
 
-    private void ShowMessage(string title, string message)
+    protected internal virtual void OnMessage(string title, string message)
     {
-      var statusbar = Package.GetGlobalService(typeof(IVsStatusbar)) as IVsStatusbar;
-      statusbar.SetText($"{title}; {message}");
+      Message?.Invoke(title, message);
+    }
+
+    protected virtual void OnStartHandler()
+    {
+      StartHandler?.Invoke(this, EventArgs.Empty);
+    }
+  }
+
+  internal interface ILogic
+  {
+    ILogic RunLogic();
+  }
+
+  internal class InitLogic : ILogic
+  {
+    private EyesJumpLogic eyesJumpLogic;
+
+    public InitLogic(EyesJumpLogic eyesJumpLogic)
+    {
+      this.eyesJumpLogic = eyesJumpLogic;
+    }
+
+    public ILogic RunLogic()
+    {
+      eyesJumpLogic.OnMessage("Eyes Jump", "Plugin logic starts");
+      return this;
     }
   }
 }

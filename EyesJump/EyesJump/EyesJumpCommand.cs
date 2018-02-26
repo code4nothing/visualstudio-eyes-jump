@@ -53,7 +53,7 @@ namespace EyesJump
 
     private static IVsTextView GetActiveView()
     {
-      var vsTextManager = (IVsTextManager) Package.GetGlobalService(typeof(SVsTextManager));
+      var vsTextManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
       vsTextManager.GetActiveView(1, null, out var actievView);
       return actievView;
     }
@@ -66,7 +66,6 @@ namespace EyesJump
     private EyesJumpCommand(Package package)
     {
       _package = package ?? throw new ArgumentNullException(nameof(package));
-      
 
       if (ServiceProvider.GetService(typeof(IMenuCommandService)) is OleMenuCommandService commandService)
       {
@@ -75,7 +74,22 @@ namespace EyesJump
         commandService.AddCommand(menuItem);
 
         _eyesJumpLogic = new EyesJumpLogic(ServiceProvider);
+        _eyesJumpLogic.Message += OnMessage;
+        _eyesJumpLogic.StartHandler += _eyesJumpLogic_StartHandler;
       }
+    }
+
+    private void _eyesJumpLogic_StartHandler(object sender, EventArgs e)
+    {
+      var inputFilter = new InputFilter(GetActiveView());
+      inputFilter.Input += InputFilter_Input;
+      _eyesJumpLogic.StopHandler += (o, args) => { inputFilter.Input -= InputFilter_Input; };
+    }
+
+    private void OnMessage(string title, string message)
+    {
+      var statusbar = Package.GetGlobalService(typeof(IVsStatusbar)) as IVsStatusbar;
+      statusbar?.SetText($"{title}; {message}");
     }
 
     /// <summary>
@@ -110,8 +124,8 @@ namespace EyesJump
     /// <param name="e">Event args.</param>
     private void MenuItemCallback(object sender, EventArgs e)
     {
-      var inputFilter = new InputFilter(GetActiveView());
-      inputFilter.Input += InputFilter_Input;
+      _eyesJumpLogic.Exec();
+      
     }
 
     private void InputFilter_Input(object sender, InputHandlerArgs args)
